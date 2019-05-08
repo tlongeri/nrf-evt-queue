@@ -21,13 +21,29 @@ void some_function(void)
     /* Do stuff */
 
     /* Cancel event for some reason */
-    nrf_evt_queue_remove(&my_evt);
+    uint32_t err_code = nrf_evt_queue_remove(&my_evt);
+    if (NRF_SUCCESS == err_code)
+    {
+        /* Event unqueued */
+    }
+    else /* NRF_ERROR_INVALID_STATE */
+    {
+        /* Event was not queued */
+    }
 }
 
 void some_interrupt(void)
 {
     /* Queue event */
-    nrf_evt_queue_put(&my_evt, event_callback);
+    uint32_t err_code = nrf_evt_queue_put(&my_evt, event_callback);
+    if (NRF_SUCCESS == err_code)
+    {
+        /* Event queued, do stuff */
+    }
+    else /* NRF_ERROR_INVALID_STATE */
+    {
+        /* Event was already queued, handle */
+    }
 }
 
 void main(void)
