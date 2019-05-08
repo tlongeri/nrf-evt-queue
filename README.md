@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "nrf_error.h"
 #include "nrf_evt_queue.h"
 #include "nrf_soc.h"
 
