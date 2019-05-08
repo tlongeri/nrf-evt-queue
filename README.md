@@ -16,21 +16,23 @@ void event_callback(void)
     /* Do stuff */
 }
 
+void some_function(void)
+{
+    /* Do stuff */
+
+    /* Cancel event for some reason */
+    nrf_evt_queue_remove(&my_evt);
+}
+
 void some_interrupt(void)
 {
     /* Queue event */
     nrf_evt_queue_put(&my_evt, event_callback);
 }
 
-void some_other_interrupt(void)
-{
-    /* Cancel event */
-    nrf_evt_queue_remove(&my_evt);
-}
-
 void main(void)
 {
-    /* Setup */
+    /* Setup stuff */
 
     while (true)
     {
@@ -38,7 +40,6 @@ void main(void)
         sd_app_evt_wait();
     }
 }
-
 ```
 
 ## Why use this over the SDK's scheduler?
