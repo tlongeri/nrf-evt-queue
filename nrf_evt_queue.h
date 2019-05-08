@@ -35,7 +35,11 @@ uint32_t nrf_evt_queue_put(nrf_evt_queue_evt_t * p_evt, nrf_evt_queue_evt_handle
  */
 uint32_t nrf_evt_queue_remove(nrf_evt_queue_evt_t * p_evt);
 
-/** @brief Execute all queued events */
+/**
+ * @brief Execute all queued events
+ * 
+ * @warning Call only from main context (as opposed to from inside an interrupt)
+ */
 void nrf_evt_queue_execute(void);
 
 #ifdef __cplusplus

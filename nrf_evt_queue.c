@@ -145,10 +145,6 @@ uint32_t nrf_evt_queue_remove(nrf_evt_queue_evt_t * p_evt)
     return ret_val;
 }
 
-
-/**
- * @warning Call only from main context
- */
 void nrf_evt_queue_execute(void)
 {
     uint8_t interrupt_state;
