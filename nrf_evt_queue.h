@@ -1,27 +1,45 @@
-#ifndef SCHEDULER_H
-#define SCHEDULER_H
+#ifndef NRF_EVT_QUEUE_H
+#define NRF_EVT_QUEUE_H
+
+#include <stdbool.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef void (*scheduler_evt_handler_t)(void);
+typedef void (*nrf_evt_queue_evt_handler_t)(void);
 
-typedef struct scheduler_evt_s scheduler_evt_t;
+typedef struct nrf_evt_queue_evt_s nrf_evt_queue_evt_t;
 
-struct scheduler_evt_s {
-    scheduler_evt_handler_t handler;
-    scheduler_evt_t * next;
+struct nrf_evt_queue_evt_s {
+    nrf_evt_queue_evt_handler_t handler;
+    nrf_evt_queue_evt_t * next;
 };
 
-bool scheduler_is_queued(scheduler_evt_t * p_evt);
-uint32_t scheduler_put(scheduler_evt_t * p_evt, scheduler_evt_handler_t callback);
-uint32_t scheduler_remove(scheduler_evt_t * p_evt);
+/** @brief Return true if a given event is currently queued for execution */
+bool nrf_evt_queue_is_queued(nrf_evt_queue_evt_t * p_evt);
 
-void scheduler_execute(void);
+/**
+ * @brief Queue event
+ * 
+ * @retval NRF_SUCCESS             Event successfully queued
+ * @retval NRF_ERROR_INVALID_STATE Event already queued
+ */
+uint32_t nrf_evt_queue_put(nrf_evt_queue_evt_t * p_evt, nrf_evt_queue_evt_handler_t callback);
+
+/**
+ * @brief Unqueue event
+ * 
+ * @retval NRF_SUCCESS Event successfully unqueued
+ */
+uint32_t nrf_evt_queue_remove(nrf_evt_queue_evt_t * p_evt);
+
+/** @brief Execute all queued events */
+void nrf_evt_queue_execute(void);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // SCHEDULER_H
+#endif // NRF_EVT_QUEUE_H

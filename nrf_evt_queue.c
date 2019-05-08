@@ -1,29 +1,33 @@
-#include <string.h>
+#include <stdbool.h>
+#include <stdint.h>
 
 #include "app_util_platform.h"
+#include "nrf_assert.h"
 #include "nrf_error.h"
 
-#include "scheduler.h"
+#include "nrf_evt_queue.h"
 
-scheduler_evt_t * p_evt_queue_head = NULL;
+static nrf_evt_queue_evt_t * p_evt_queue_head = NULL;
 
 /**
- * @ret A pointer to the predecessor, or NULL if it was not found
+ * @brief Get the predecessor of an event in the queue
+ * 
+ * @ret Pointer to the predecessor, or NULL if it was not found
  * 
  * @warning Should be called within a critical section
  * @warning p_evt_queue_head should have been checked before calling this, and not be NULL or p_evt
  *          itself
  */
-static scheduler_evt_t * find_predecessor(scheduler_evt_t * p_evt)
+static nrf_evt_queue_evt_t * find_predecessor(nrf_evt_queue_evt_t * p_evt)
 {
     ASSERT(p_evt_queue_head != NULL && p_evt_queue_head != p_evt);
-    scheduler_evt_t * p_iterating_evt = p_evt_queue_head;
+    nrf_evt_queue_evt_t * p_iterating_evt = p_evt_queue_head;
     while (NULL != p_iterating_evt->next && p_evt != p_iterating_evt->next)
     {
         p_iterating_evt = p_iterating_evt->next;
     }
 
-    scheduler_evt_t * ret_val;
+    nrf_evt_queue_evt_t * ret_val;
     if (NULL == p_iterating_evt->next)
     {
         ret_val = NULL;
@@ -35,9 +39,16 @@ static scheduler_evt_t * find_predecessor(scheduler_evt_t * p_evt)
     return ret_val;
 }
 
-static scheduler_evt_t * get_last(void)
+/**
+ * @brief Get the last queued event
+ * 
+ * @warning Should be called within critical region
+ * 
+ * @ret A pointer to the last queued event, or NULL if there are no queued events
+ */
+static nrf_evt_queue_evt_t * get_last(void)
 {
-    scheduler_evt_t * p_iterating_evt = p_evt_queue_head;
+    nrf_evt_queue_evt_t * p_iterating_evt = p_evt_queue_head;
 
     if (NULL != p_iterating_evt)
     {
@@ -49,11 +60,11 @@ static scheduler_evt_t * get_last(void)
     return p_iterating_evt;
 }
 
-bool scheduler_is_queued(scheduler_evt_t * p_evt)
+bool nrf_evt_queue_is_queued(nrf_evt_queue_evt_t * p_evt)
 {
     uint8_t interrupt_state;
     app_util_critical_region_enter(&interrupt_state);
-    scheduler_evt_t * p_iterating_evt = p_evt_queue_head;
+    nrf_evt_queue_evt_t * p_iterating_evt = p_evt_queue_head;
     while (NULL != p_iterating_evt && p_evt != p_iterating_evt)
     {
         p_iterating_evt = p_iterating_evt->next;
@@ -62,7 +73,7 @@ bool scheduler_is_queued(scheduler_evt_t * p_evt)
     return p_iterating_evt == p_evt;
 }
 
-uint32_t scheduler_put(scheduler_evt_t * p_evt, scheduler_evt_handler_t callback)
+uint32_t nrf_evt_queue_put(nrf_evt_queue_evt_t * p_evt, nrf_evt_queue_evt_handler_t callback)
 {
     ASSERT(NULL != callback);
 
@@ -82,10 +93,10 @@ uint32_t scheduler_put(scheduler_evt_t * p_evt, scheduler_evt_handler_t callback
     }
     else
     {
-        scheduler_evt_t * p_predecessor = find_predecessor(p_evt);
+        nrf_evt_queue_evt_t * p_predecessor = find_predecessor(p_evt);
         if (NULL == p_predecessor) // Was not found already queued
         {
-            scheduler_evt_t * p_last = get_last();
+            nrf_evt_queue_evt_t * p_last = get_last();
             ASSERT(NULL != p_last);
             p_evt->next = NULL;
             p_evt->handler = callback;
@@ -102,7 +113,7 @@ uint32_t scheduler_put(scheduler_evt_t * p_evt, scheduler_evt_handler_t callback
 }
 
 
-uint32_t scheduler_remove(scheduler_evt_t * p_evt)
+uint32_t nrf_evt_queue_remove(nrf_evt_queue_evt_t * p_evt)
 {
     uint32_t ret_val;
     uint8_t interrupt_state;
@@ -118,7 +129,7 @@ uint32_t scheduler_remove(scheduler_evt_t * p_evt)
     }
     else
     {
-        scheduler_evt_t * p_predecessor = find_predecessor(p_evt);
+        nrf_evt_queue_evt_t * p_predecessor = find_predecessor(p_evt);
         if (NULL == p_predecessor) // Was not found already queued
         {
             ret_val = NRF_ERROR_INVALID_STATE;
@@ -138,13 +149,13 @@ uint32_t scheduler_remove(scheduler_evt_t * p_evt)
 /**
  * @warning Call only from main context
  */
-void scheduler_execute(void)
+void nrf_evt_queue_execute(void)
 {
     uint8_t interrupt_state;
     app_util_critical_region_enter(&interrupt_state);
     while (p_evt_queue_head != NULL)
     {
-        scheduler_evt_handler_t handler = p_evt_queue_head->handler;
+        nrf_evt_queue_evt_handler_t handler = p_evt_queue_head->handler;
         p_evt_queue_head = p_evt_queue_head->next;
         app_util_critical_region_exit(interrupt_state);
         
