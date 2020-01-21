@@ -31,7 +31,8 @@ uint32_t nrf_evt_queue_put(nrf_evt_queue_evt_t * p_evt, nrf_evt_queue_evt_handle
 /**
  * @brief Unqueue event
  * 
- * @retval NRF_SUCCESS Event successfully unqueued
+ * @retval NRF_SUCCESS             Event successfully unqueued
+ * @retval NRF_ERROR_INVALID_STATE Event not queued
  */
 uint32_t nrf_evt_queue_remove(nrf_evt_queue_evt_t * p_evt);
 
